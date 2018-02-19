@@ -104,3 +104,5 @@ ENV/
 *.zip
 **/*.zip
 **/**/*.zip
+.vscode/
+bbsport**/*
