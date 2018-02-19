@@ -6,6 +6,7 @@ CIS 365 - Artificial Intelligence - Project 2
 Frank Wanye
 Kellin McAvoy
 Andrew Prins
+Troy Madsen
 '''
 
 import nltk
