@@ -12,6 +12,14 @@ Troy Madsen
 import nltk
 import pyphen
 import pandas
+import dill
+import pathlib
+import argparse
+
+#
+# Paths to Data Files
+#
+NEWS_DATA = './processed_data/news/articles.pkl'
 
 def num_syllables(text):
     '''
@@ -125,11 +133,58 @@ def process_news_data():
     news_data['score'] = scores
     news_data = news_data.drop(columns=['content'])
     print(news_data.head())
+    save_processed_data(news_data, NEWS_DATA)
     return news_data
 # End of process_news_data()
 
+def save_processed_data(data, filePath):
+    '''
+    Saves the processed data in file at the given path using the dill module.
+
+    Params:
+    - data (pandas.DataFrame): The processed data to save
+    - filePath (str): The path in which to save the data
+    '''
+    pathlib.Path(filePath).parent.mkdir(parents=True, exist_ok=True)
+    with open(filePath, 'wb') as dataFile:
+        dill.dump(data, dataFile)
+# End of save_processed_data()
+
+def load_processed_data(filePath):
+    '''
+    Loads processed data from the given file.
+
+    Params:
+    - filePath (str): The path to the file containing processed data
+
+    Returns:
+    - data (pandas.DataFrame): The pandas data frame containing processed data
+    '''
+    with open(filePath, 'rb') as dataFile:
+        data = dill.load(dataFile)
+    print(data.head())
+    return data    
+# End of load_processed_data()
+
+def parse_arguments():
+    '''
+    Parses the command-line arguments to the script.
+
+    Returns:
+    - args (argparse.Namespace): The namespace object containing the parsed arguments
+    '''
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--news', '-n', action='store_true', help='Process news data')
+    args = parser.parse_args()
+    return args
+# End of parse_arguments()
+
 if __name__ == "__main__":
-    news_data = process_news_data()
+    args = parse_arguments()
+    if args.news:
+        news_data = process_news_data()
+    else:
+        news_data = load_processed_data(NEWS_DATA)
     print(readability_score('Hello World!'))
     print(readability_score('Join the Dark Side, we have home-made cookies.'))
     print(readability_score('Once, into a quiet village, without haste and without heed '
