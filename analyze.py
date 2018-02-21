@@ -25,6 +25,46 @@ import seaborn as sns
 #
 NEWS_DATA = './processed_data/news/articles.pkl'
 
+# Things to not count as words and/or syllables
+WORD_EXCEPTIONS = ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%', '\'', '"', '`', '”', '“']
+
+#
+# The dictionaries for counting syllables
+#
+CMUDICT = nltk.corpus.cmudict.dict()
+PYPHENDICT = pyphen.Pyphen(lang='en_US')
+
+def syllables_in_word(word):
+    '''
+    Returns the number of syllables in a word. If the word is in nltk's cmudict dictionary. This dictionary contains
+    pronunciation guide strings for words in the Carnegie Mellon University dictionary. E.g.: the entry for the word
+    'syllable' is ['S', 'IH1', 'L', 'AH0', 'B', 'AH0', 'L']. The vowels that are stressed in pronunctiation (which
+    correspond to syllables in a word with very few exceptions, if any), are denoted by having a digit at the end of
+    the entry (eg, for 'syllable', the stresed vowel sounds are 'IH1', 'AH0' and 'AH0'). The number of syllabels is
+    then equal to the number of strings in the cmudict entry for a word that end in digits.
+
+    If a word is not present in the cmudict, then we resort to pyphen, which hyphenates the word. It is then split on
+    the hyphen character, and the length of the resulting list is used as an estimate of the number of syllables in
+    the word.
+
+    Params:
+    - word (str): The word for which we want to count syllables
+
+    Returns:
+    - num_syllables (int): The number of syllables in the word
+    '''
+    word = word.lower()
+    if word in CMUDICT:
+        cmudict_entry = CMUDICT[word][0]
+        cmudict_entry = map(lambda part : 1 if part[-1].isdigit() else 0, cmudict_entry)
+        cmudict_entry = list(cmudict_entry)
+        num_syllables = sum(cmudict_entry)
+    else:
+        syllable_list = PYPHENDICT.inserted(word).split('-')
+        num_syllables = len(syllable_list)
+    return num_syllables
+# End of syllables_in_word()
+
 def num_syllables(text):
     '''
     Finds the number of syllables in a given text.
@@ -35,16 +75,10 @@ def num_syllables(text):
     Returns:
     - num_syllables (int): The number of syllables in the given text
     '''
-    dictionary = pyphen.Pyphen(lang='en_US')
-    syllables = list()
-    words = [word for word in text if word not in ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%']]
-    for word in words:
-        syllable_list = dictionary.inserted(word).split('-')
-        syllables.extend(syllable_list)
-    syllables = [syllable for syllable in syllables if len(syllable) > 0]
-    # print('Syllables: ', syllables)
-    # print('Num syllables: ', len(syllables))
-    return len(syllables)
+    num_syllables = 0
+    for word in text:
+        num_syllables += syllables_in_word(word)
+    return num_syllables
 # End of num_syllables()
 
 def num_words(text):
@@ -59,8 +93,9 @@ def num_words(text):
     - num_syllables (int): The number of syllables in the given text
     '''
     words = nltk.tokenize.word_tokenize(text)
+    words = filter(lambda word : word not in WORD_EXCEPTIONS, words)
+    words = list(words)
     syllables = num_syllables(words)
-    # print('Num words: ', len(words))
     return len(words), syllables
 # End of num_words()
 
@@ -75,13 +110,13 @@ def num_sentences(text):
     - num_sentences (int): The number of sentences in the given text
     '''
     sentences = nltk.tokenize.sent_tokenize(text)
-    # print('Num sentences: ', len(sentences))
     return len(sentences)
 # End of num_sentences()
 
 def readability_score(text):
     '''
-    Calculates the readability score for the given text.
+    Calculates the Flesch-Kincaid Reading Easy Score for the given text. If the readability score is off the
+    Flesch-Kincaid Reading Ease Score scale (< 0 or > 100), returns -1.
 
     Params:
     - text (str): The text to be analyzed
@@ -89,14 +124,15 @@ def readability_score(text):
     Returns:
     - score (float): The readability score for the text
     '''
-    # syllables = num_syllables(text)
     words, syllables = num_words(text)
     sentences = num_sentences(text)
-    if sentences == 0 or words == 0:
+    if sentences == 0 or words == 0: # Prevent division by 0
         return -1
     score = 206.835
     score -= 1.015 * (words / sentences)
     score -= 84.6 * (syllables / words)
+    if score < 0 or score > 100:
+        return -1
     return score
 # End of readability_score()
 
@@ -121,7 +157,7 @@ def read_news_data():
 
 def process_news_data():
     '''
-    Combines all the news data into one pandas DataFrame, calculates the readability_score for all articles, and 
+    Combines all the news data into one pandas DataFrame, calculates the readability_score for all articles, and
     appends that to the DataFrame.
 
     Returns
@@ -130,11 +166,17 @@ def process_news_data():
     news_data = read_news_data()
     print('=====Processing News Data=====')
     scores = list()
+    num_errors = 0
     for index, content in enumerate(news_data['content']):
-        scores.append(readability_score(content))
+        score = readability_score(content)
+        if score == -1:
+            num_errors += 1
+        scores.append(score)
         if index % 1000 == 0:
             print('Processed %d articles' % index)
+    print("Articles with a faulty score: %d/%d" % (num_errors, len(scores)))
     news_data['score'] = scores
+    news_data = news_data.loc[news_data['score'] > -1] # Drop all rows where the score is wrong
     news_data = news_data.drop(columns=['content'])
     print(news_data.head())
     save_processed_data(news_data, NEWS_DATA)
@@ -167,7 +209,7 @@ def load_processed_data(filePath):
     with open(filePath, 'rb') as dataFile:
         data = dill.load(dataFile)
     print(data.head())
-    return data    
+    return data
 # End of load_processed_data()
 
 def analyze_news_data(news_data):
@@ -187,7 +229,7 @@ def analyze_news_data(news_data):
     publication_means = news_data.groupby(['publication'], as_index=False).mean()
     print(publication_means.head())
     plot = sns.barplot(y='publication', x='score', data=publication_means)
-    plot.set_title('Comparing Flesch-Kincaid Reading Scores for\nDifferent Publications')
+    plot.set_title('Comparing Flesch-Kincaid Reading Ease Scores\nfor Different Publications')
     plot.set(xlim=(0,100), xlabel='Average Flesch-Kincaid Reading Ease Score')
     plt.tight_layout()
     save_plot(plot, './analysis/news/publication_comparison.png')
@@ -197,7 +239,7 @@ def analyze_news_data(news_data):
     year_means['year'] = year_means['year'].astype(str)
     print(year_means.head())
     plot = sns.pointplot(x='year', y='score', data=year_means)
-    plot.set_title('Comparing Flesch-Kincaid Reading Scores for\nDifferent Years')
+    plot.set_title('Comparing Flesch-Kincaid Reading Ease Scores\nfor Different Years')
     plot.set_xticklabels(plot.get_xticklabels(), rotation=90)
     plot.set(ylim=(0,100), ylabel='Average Flesch-Kincaid Reading Ease Score', xlabel='Year')
     plt.tight_layout()
