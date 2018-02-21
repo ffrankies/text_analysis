@@ -25,7 +25,10 @@ import seaborn as sns
 #
 NEWS_DATA = './processed_data/news/articles.pkl'
 
-def num_syllables(text):
+# Things to not count as words and/or syllables
+WORD_EXCEPTIONS = ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%', '\'', '"', '`', '”', '“']
+
+def num_syllables(text, debug):
     '''
     Finds the number of syllables in a given text.
 
@@ -42,12 +45,14 @@ def num_syllables(text):
         syllable_list = dictionary.inserted(word).split('-')
         syllables.extend(syllable_list)
     syllables = [syllable for syllable in syllables if len(syllable) > 0]
+    if debug:
+        print('Syllables: ', syllables)
     # print('Syllables: ', syllables)
     # print('Num syllables: ', len(syllables))
     return len(syllables)
 # End of num_syllables()
 
-def num_words(text):
+def num_words(text, debug):
     '''
     Finds the number of words and syllables in a given text.
 
@@ -59,12 +64,16 @@ def num_words(text):
     - num_syllables (int): The number of syllables in the given text
     '''
     words = nltk.tokenize.word_tokenize(text)
-    syllables = num_syllables(words)
+    words = filter(lambda word : word not in WORD_EXCEPTIONS, words)
+    words = list(words)
+    if debug:
+        print('Words: ', words)
+    syllables = num_syllables(words, debug)
     # print('Num words: ', len(words))
     return len(words), syllables
 # End of num_words()
 
-def num_sentences(text):
+def num_sentences(text, debug):
     '''
     Finds the number of sentences in a given text.
 
@@ -75,11 +84,13 @@ def num_sentences(text):
     - num_sentences (int): The number of sentences in the given text
     '''
     sentences = nltk.tokenize.sent_tokenize(text)
+    if debug:
+        print('Sentences: ', sentences)
     # print('Num sentences: ', len(sentences))
     return len(sentences)
 # End of num_sentences()
 
-def readability_score(text):
+def readability_score(text, debug=False):
     '''
     Calculates the readability score for the given text.
 
@@ -90,8 +101,8 @@ def readability_score(text):
     - score (float): The readability score for the text
     '''
     # syllables = num_syllables(text)
-    words, syllables = num_words(text)
-    sentences = num_sentences(text)
+    words, syllables = num_words(text, debug)
+    sentences = num_sentences(text, debug)
     if sentences == 0 or words == 0:
         return -1
     score = 206.835
@@ -121,7 +132,7 @@ def read_news_data():
 
 def process_news_data():
     '''
-    Combines all the news data into one pandas DataFrame, calculates the readability_score for all articles, and 
+    Combines all the news data into one pandas DataFrame, calculates the readability_score for all articles, and
     appends that to the DataFrame.
 
     Returns
@@ -131,6 +142,11 @@ def process_news_data():
     print('=====Processing News Data=====')
     scores = list()
     for index, content in enumerate(news_data['content']):
+        score = readability_score(content)
+        if score <= 0 or score >= 100:
+            print("=====\nScore: %f\nContent: %s\n=====" % (score, content))
+            readability_score(content, True)
+            exit()
         scores.append(readability_score(content))
         if index % 1000 == 0:
             print('Processed %d articles' % index)
@@ -167,7 +183,7 @@ def load_processed_data(filePath):
     with open(filePath, 'rb') as dataFile:
         data = dill.load(dataFile)
     print(data.head())
-    return data    
+    return data
 # End of load_processed_data()
 
 def analyze_news_data(news_data):
@@ -187,7 +203,7 @@ def analyze_news_data(news_data):
     publication_means = news_data.groupby(['publication'], as_index=False).mean()
     print(publication_means.head())
     plot = sns.barplot(y='publication', x='score', data=publication_means)
-    plot.set_title('Comparing Flesch-Kincaid Reading Scores for\nDifferent Publications')
+    plot.set_title('Comparing Flesch-Kincaid Reading Ease Scores\nfor Different Publications')
     plot.set(xlim=(0,100), xlabel='Average Flesch-Kincaid Reading Ease Score')
     plt.tight_layout()
     save_plot(plot, './analysis/news/publication_comparison.png')
@@ -197,7 +213,7 @@ def analyze_news_data(news_data):
     year_means['year'] = year_means['year'].astype(str)
     print(year_means.head())
     plot = sns.pointplot(x='year', y='score', data=year_means)
-    plot.set_title('Comparing Flesch-Kincaid Reading Scores for\nDifferent Years')
+    plot.set_title('Comparing Flesch-Kincaid Reading Ease Scores\nfor Different Years')
     plot.set_xticklabels(plot.get_xticklabels(), rotation=90)
     plot.set(ylim=(0,100), ylabel='Average Flesch-Kincaid Reading Ease Score', xlabel='Year')
     plt.tight_layout()
