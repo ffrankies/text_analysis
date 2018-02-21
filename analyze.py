@@ -15,6 +15,10 @@ import pandas
 import dill
 import pathlib
 import argparse
+import matplotlib
+matplotlib.use('Agg') # Otherwise it crashes
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 #
 # Paths to Data Files
@@ -166,6 +170,54 @@ def load_processed_data(filePath):
     return data    
 # End of load_processed_data()
 
+def analyze_news_data(news_data):
+    '''
+    Creates multiple plots showing different aspects of news data.
+
+    Params:
+    - news_data (pandas.DataFrame): The processed news data
+    '''
+    # Scores distribution
+    plot = sns.distplot(news_data['score'], bins=150)
+    plot.set_title('Distribution of Flesch-Kincaid Reading Ease Scores for News Articles')
+    plot.set(xlim=(0,100), yticks=[], xlabel='Flesh-Kincaid Reading Ease Score')
+    plt.tight_layout()
+    save_plot(plot, './analysis/news/distribution.png')
+    # Scores by publication
+    publication_means = news_data.groupby(['publication'], as_index=False).mean()
+    print(publication_means.head())
+    plot = sns.barplot(y='publication', x='score', data=publication_means)
+    plot.set_title('Comparing Flesh-Kincaid Reading Scores for\nDifferent Publications')
+    plot.set(xlim=(0,100), xlabel='Average Flesh-Kincaid Reading Ease Score')
+    plt.tight_layout()
+    save_plot(plot, './analysis/news/publication_comparison.png')
+    # Scores by year
+    year_means = news_data.groupby(['year'], as_index=False).mean()
+    year_means['year'] = year_means['year'].astype(int)
+    year_means['year'] = year_means['year'].astype(str)
+    print(year_means.head())
+    plot = sns.pointplot(x='year', y='score', data=year_means)
+    plot.set_title('Comparing Flesh-Kincaid Reading Scores for\nDifferent Years')
+    plot.set_xticklabels(plot.get_xticklabels(), rotation=90)
+    plot.set(ylim=(0,100), ylabel='Average Flesh-Kincaid Reading Ease Score', xlabel='Year')
+    plt.tight_layout()
+    save_plot(plot, './analysis/news/year_comparison.png')
+# End of analyze_news_data()
+
+def save_plot(plot, filePath):
+    '''
+    Saves the plot figure into the given filePath.
+
+    Params:
+    - plot (plt.Axes): The axes containing the plot to save
+    - fielPath (str): The path into which to save the plot
+    '''
+    pathlib.Path(filePath).parent.mkdir(parents=True, exist_ok=True)
+    fig = plot.get_figure()
+    fig.savefig(filePath)
+    plt.cla()
+# End of save_plot()
+
 def parse_arguments():
     '''
     Parses the command-line arguments to the script.
@@ -185,9 +237,11 @@ if __name__ == "__main__":
         news_data = process_news_data()
     else:
         news_data = load_processed_data(NEWS_DATA)
-    print(readability_score('Hello World!'))
-    print(readability_score('Join the Dark Side, we have home-made cookies.'))
-    print(readability_score('Once, into a quiet village, without haste and without heed '
-                            'in the golden prime of morning, strayed the poet\'s winged steed. '
-                            'It was autumn, and incessant, piped the quails from shocks and sheaves, '
-                            'and, like living coals, the apples, burned among the withering leaves.'))
+    sns.set() # Use seaborn's plot styling
+    analyze_news_data(news_data)
+    # print(readability_score('Hello World!'))
+    # print(readability_score('Join the Dark Side, we have home-made cookies.'))
+    # print(readability_score('Once, into a quiet village, without haste and without heed '
+    #                         'in the golden prime of morning, strayed the poet\'s winged steed. '
+    #                         'It was autumn, and incessant, piped the quails from shocks and sheaves, '
+    #                         'and, like living coals, the apples, burned among the withering leaves.'))
