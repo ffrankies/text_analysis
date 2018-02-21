@@ -40,7 +40,6 @@ def num_syllables(text, debug):
     '''
     dictionary = pyphen.Pyphen(lang='en_US')
     syllables = list()
-    words = [word for word in text if word not in ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%']]
     for word in words:
         syllable_list = dictionary.inserted(word).split('-')
         syllables.extend(syllable_list)
