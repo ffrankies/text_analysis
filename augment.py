@@ -114,6 +114,7 @@ def augment(text):
 
 if __name__ == "__main__":
     text_examples = []
+    # Set of famous text examples
     text_examples.append("In the beginning God created the heavens and the earth. Now the earth was formless and empty, darkness was over the surface of the deep, and the Spirit of God was hovering over the waters. And God said, “Let there be light,” and there was light. God saw that the light was good, and he separated the light from the darkness. God called the light “day,” and the darkness he called “night.” And there was evening, and there was morning — the first day.")
     text_examples.append("It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was the season of Light, it was the season of Darkness, it was the spring of hope, it was the winter of despair, we had everything before us, we had nothing before us, we were all going direct to Heaven, we were all going direct the other way — in short, the period was so far like the present period, that some of its noisiest authorities insisted on its being received, for good or for evil, in the superlative degree of comparison only.")
     text_examples.append("I kissed a girl and I liked it. The taste of her cherry chap stick. I kissed a girl just to try it. I hope my boyfriend dont mind it. It felt so wrong. It felt so right. Dont mean Im in love tonight. I kissed a girl and I liked it. I liked it.")
