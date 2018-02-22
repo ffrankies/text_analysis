@@ -66,7 +66,7 @@ if __name__ == "__main__":
     text_long = text_short = ""
     edits = []
 
-    # Finds all possible synonyms for each editable word
+    # Finds all possible synonyms for each word
     for word in editable:
         print("Original: " + word[0])
         choices = []
