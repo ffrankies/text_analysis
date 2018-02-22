@@ -252,7 +252,7 @@ def save_plot(plot, filePath):
 
     Params:
     - plot (plt.Axes): The axes containing the plot to save
-    - fielPath (str): The path into which to save the plot
+    - filePath (str): The path into which to save the plot
     '''
     pathlib.Path(filePath).parent.mkdir(parents=True, exist_ok=True)
     fig = plot.get_figure()
