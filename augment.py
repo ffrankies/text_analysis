@@ -34,7 +34,7 @@ Returns:
 '''
 def augment(text):
     # Printing the old text
-    print(text)
+    # print(text)
 
     # Augmenting the text
 
@@ -82,13 +82,6 @@ def augment(text):
     # Flatten words in a single str
     augmented_text = ' '.join(words)
 
-    # Reinserting spaces into str
-    # for i in spaces:
-    #     augmented_text = augmented_text[:i] + ' ' + augmented_text[i:]
-
-    # Printing the new text
-    print(augmented_text)
-
     return augmented_text
 # End of augment()
 
@@ -115,14 +108,10 @@ def process_news_data():
         aug_scores.append(new_score)
         if index % 1000 == 0:
             print('Processed %d articles' % index)
-        #TODO Remove this after testing
-        # Stopping after the first item for testing
-        if index >= 5:
-            break
+
     print("Articles with a faulty score: %d/%d" % (num_errors, len(scores)))
-    #TODO remove this size fix
-    news_data['score'] = scores + [scores[0]] * (len(news_data) - len(scores)) # Ensuring the length of news_data and scores match
-    news_data['aug_scores'] = aug_scores + [aug_scores[0]] * (len(news_data) - len(aug_scores)) # Ensuring the length of news_data and aug_scores match
+    news_data['score'] = scores
+    news_data['aug_scores'] = aug_scores
     news_data = news_data.loc[news_data['score'] > -1] # Drop all rows where the score is wrong
     news_data = news_data.drop(columns=['content'])
     print(news_data.head())
