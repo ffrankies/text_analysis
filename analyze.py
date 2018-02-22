@@ -131,7 +131,7 @@ def readability_score(text):
     score = 206.835
     score -= 1.015 * (words / sentences)
     score -= 84.6 * (syllables / words)
-    if score < 0 or score > 100:
+    if score < 0 or score > 100: # All faulty scores are -1, for easy filtering
         return -1
     return score
 # End of readability_score()
@@ -281,9 +281,3 @@ if __name__ == "__main__":
         news_data = load_processed_data(NEWS_DATA)
     sns.set() # Use seaborn's plot styling
     analyze_news_data(news_data)
-    # print(readability_score('Hello World!'))
-    # print(readability_score('Join the Dark Side, we have home-made cookies.'))
-    # print(readability_score('Once, into a quiet village, without haste and without heed '
-    #                         'in the golden prime of morning, strayed the poet\'s winged steed. '
-    #                         'It was autumn, and incessant, piped the quails from shocks and sheaves, '
-    #                         'and, like living coals, the apples, burned among the withering leaves.'))
