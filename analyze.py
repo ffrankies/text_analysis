@@ -19,11 +19,14 @@ import matplotlib
 matplotlib.use('Agg') # Otherwise it crashes
 import matplotlib.pyplot as plt
 import seaborn as sns
+import json
+import traceback
 
 #
 # Paths to Data Files
 #
 NEWS_DATA = './processed_data/news/articles.pkl'
+AMAZON_DATA = './processed_data/amazon/reviews.pkl'
 
 # Things to not count as words and/or syllables
 WORD_EXCEPTIONS = ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%', '\'', '"', '`', '”', '“']
@@ -183,6 +186,80 @@ def process_news_data():
     return news_data
 # End of process_news_data()
 
+def fromjson(fname):
+    '''
+    Creates a dict from the specified json file
+
+    Returns:
+    - json_data (dict): The contents of the json file in a dict.
+    '''
+    with open(fname) as f:
+        return [json.loads(line) for line in f]
+# End of fromjson()
+
+
+def read_amazon_data():
+    '''
+    Reads in amazon reviews, cleans up data, and puts it into one pandas data frame.
+
+    Returns:
+    - amazon_data (pandas.DataFrame): The data frame containing processed amazon reviews data
+    '''
+    print('=====Reading Amazon Data=====')
+    amazon_json = fromjson('./data/amazon/kindle_reviews.json')
+    
+    print('=====Cleaning Amazon Data=====')
+    num_errors = 0    
+    for k, v in enumerate(amazon_json):
+        try:
+            amazon_json[k].pop("reviewerID", None)
+            amazon_json[k].pop("asin", None)
+            amazon_json[k].pop("reviewerName", None)
+            amazon_json[k].pop("helpful", None)
+            amazon_json[k].pop("summary", None)
+            amazon_json[k].pop("unixReviewTime", None)
+            amazon_json[k]["rating"] = int(float(amazon_json[k]["overall"]))
+            amazon_json[k]["year"] = int(amazon_json[k]["reviewTime"].split(", ")[1])
+            amazon_json[k].pop("overall", None)
+            amazon_json[k].pop("reviewTime", None)            
+        except Exception:
+            num_errors += 1
+            print(traceback.format_exc())
+            pass
+    print("Reviews with invalid data: %d/%d" % (num_errors, len(amazon_json)))
+    print('=====Creating Amazon Panda DataFrame=====')
+    amazon_data = pandas.DataFrame.from_dict(amazon_json)
+    return amazon_data
+# End of read_amazon_data()
+
+def process_amazon_data():
+    '''
+    Gathers amazon reviews into one pandas DataFrame, cleans the data, calculates the readability_score for all articles, and
+    appends that to the DataFrame.
+
+    Returns
+    - amazon_data (pandas.DataFrame): The data frame containing processed news article data
+    '''
+    amazon_data = read_amazon_data()
+    print('=====Processing Amazon Data=====')
+    scores = list()
+    num_errors = 0
+    for index, content in enumerate(amazon_data['reviewText']):
+        score = readability_score(content)
+        if score == -1:
+            num_errors += 1
+        scores.append(score)
+        if index % 1000 == 0:
+            print('Processed %d reviews' % index)
+    print("Reviews with a faulty score: %d/%d" % (num_errors, len(scores)))
+    amazon_data['score'] = scores
+    amazon_data = amazon_data.loc[amazon_data['score'] > -1] # Drop all rows where the score is wrong
+    amazon_data = amazon_data.drop(columns=['reviewText'])
+    print(amazon_data.head())
+    save_processed_data(amazon_data, AMAZON_DATA)
+    return amazon_data
+# End of process_amazon_data()
+
 def save_processed_data(data, filePath):
     '''
     Saves the processed data in file at the given path using the dill module.
@@ -246,6 +323,41 @@ def analyze_news_data(news_data):
     save_plot(plot, './analysis/news/year_comparison.png')
 # End of analyze_news_data()
 
+def analyze_amazon_data(amazon_data):
+    '''
+    Creates multiple plots showing different aspects of news data.
+
+    Params:
+    - amazon_data (pandas.DataFrame): The processed news data
+    '''
+    # Scores distribution
+    plot = sns.distplot(amazon_data['score'], bins=150)
+    plot.set_title('Distribution of Flesch-Kincaid Reading Ease Scores for Amazon Reviews')
+    plot.set(xlim=(0,100), yticks=[], xlabel='Flesch-Kincaid Reading Ease Score')
+    plt.tight_layout()
+    save_plot(plot, './analysis/amazon/distribution.png')
+    # Scores by user rating
+    rating_means = amazon_data.groupby(['rating'], as_index=False).mean()
+    print(rating_means.head())
+    plot = sns.barplot(y='score', x='rating', data=rating_means)
+    plot.set_title('Comparing Flesch-Kincaid Reading Ease Scores\nfor Different Ratings')
+    plot.set(xlim=(-1,5), xlabel='Amazon Rating')
+    plot.set(ylim=(0,100), yticks=[0,10,20,30,40,50,60,70,80,90,100], ylabel='Flesch-Kincaid Reading Ease Score')    
+    plt.tight_layout()
+    save_plot(plot, './analysis/amazon/rating_comparison.png')
+    # Scores by year
+    year_means = amazon_data.groupby(['year'], as_index=False).mean()
+    year_means['year'] = year_means['year'].astype(int)
+    year_means['year'] = year_means['year'].astype(str)
+    print(year_means.head())
+    plot = sns.pointplot(x='year', y='score', data=year_means)
+    plot.set_title('Comparing Flesch-Kincaid Reading Ease Scores\nfor Different Years')
+    plot.set_xticklabels(plot.get_xticklabels(), rotation=90)
+    plot.set(ylim=(0,100), ylabel='Average Flesch-Kincaid Reading Ease Score', xlabel='Year')
+    plt.tight_layout()
+    save_plot(plot, './analysis/amazon/year_comparison.png')
+# End of analyze_amazon_data()
+
 def save_plot(plot, filePath):
     '''
     Saves the plot figure into the given filePath.
@@ -269,18 +381,29 @@ def parse_arguments():
     '''
     parser = argparse.ArgumentParser()
     parser.add_argument('--news', '-n', action='store_true', help='Process news data')
+    parser.add_argument('--amazon', '-az', action='store_true', help='Process amazon reviews data')
     args = parser.parse_args()
     return args
 # End of parse_arguments()
 
 if __name__ == "__main__":
     args = parse_arguments()
+    sns.set() # Use seaborn's plot styling
+
     if args.news:
         news_data = process_news_data()
+        analyze_news_data(news_data)        
     else:
         news_data = load_processed_data(NEWS_DATA)
-    sns.set() # Use seaborn's plot styling
-    analyze_news_data(news_data)
+    if args.amazon:
+        amazon_data = process_amazon_data()
+        analyze_amazon_data(amazon_data)        
+    else:
+        amazon_data = load_processed_data(AMAZON_DATA)
+
+    if not args.news and not args.amazon:
+        analyze_news_data(news_data)
+        analyze_amazon_data(amazon_data)
     # print(readability_score('Hello World!'))
     # print(readability_score('Join the Dark Side, we have home-made cookies.'))
     # print(readability_score('Once, into a quiet village, without haste and without heed '
