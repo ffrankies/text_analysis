@@ -226,6 +226,11 @@ def analyze_news_data(news_data):
     plt.tight_layout()
     save_plot(plot, './analysis/news/distribution.png')
     # Scores by publication
+    plot = sns.boxplot(y='publication', x='score', data=news_data)
+    plot.set_title('Comparing Flesch-Kincaid Reading Ease Score\nDistributions Across Publications')
+    plot.set(xlim=(0,100), xlabel='Flesch-Kincaid Reading Ease Score', ylabel='')
+    plt.tight_layout()
+    save_plot(plot, './analysis/news/publication_boxplot.png')
     publication_means = news_data.groupby(['publication'], as_index=False).mean()
     print(publication_means.head())
     plot = sns.barplot(y='publication', x='score', data=publication_means)
