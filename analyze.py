@@ -134,7 +134,7 @@ def readability_score(text):
     score = 206.835
     score -= 1.015 * (words / sentences)
     score -= 84.6 * (syllables / words)
-    if score < 0 or score > 100:
+    if score < 0 or score > 100: # All faulty scores are -1, for easy filtering
         return -1
     return score
 # End of readability_score()
@@ -303,11 +303,16 @@ def analyze_news_data(news_data):
     plt.tight_layout()
     save_plot(plot, './analysis/news/distribution.png')
     # Scores by publication
+    plot = sns.boxplot(y='publication', x='score', data=news_data)
+    plot.set_title('Comparing Flesch-Kincaid Reading Ease Score\nDistributions Across Publications')
+    plot.set(xlim=(0,100), xlabel='Flesch-Kincaid Reading Ease Score', ylabel='')
+    plt.tight_layout()
+    save_plot(plot, './analysis/news/publication_boxplot.png')
     publication_means = news_data.groupby(['publication'], as_index=False).mean()
     print(publication_means.head())
     plot = sns.barplot(y='publication', x='score', data=publication_means)
     plot.set_title('Comparing Flesch-Kincaid Reading Ease Scores\nfor Different Publications')
-    plot.set(xlim=(0,100), xlabel='Average Flesch-Kincaid Reading Ease Score')
+    plot.set(xlim=(0,70), xlabel='Average Flesch-Kincaid Reading Ease Score', ylabel='')
     plt.tight_layout()
     save_plot(plot, './analysis/news/publication_comparison.png')
     # Scores by year
@@ -318,7 +323,7 @@ def analyze_news_data(news_data):
     plot = sns.pointplot(x='year', y='score', data=year_means)
     plot.set_title('Comparing Flesch-Kincaid Reading Ease Scores\nfor Different Years')
     plot.set_xticklabels(plot.get_xticklabels(), rotation=90)
-    plot.set(ylim=(0,100), ylabel='Average Flesch-Kincaid Reading Ease Score', xlabel='Year')
+    plot.set(ylim=(20,80), ylabel='Average Flesch-Kincaid Reading Ease Score', xlabel='')
     plt.tight_layout()
     save_plot(plot, './analysis/news/year_comparison.png')
 # End of analyze_news_data()
@@ -364,7 +369,7 @@ def save_plot(plot, filePath):
 
     Params:
     - plot (plt.Axes): The axes containing the plot to save
-    - fielPath (str): The path into which to save the plot
+    - filePath (str): The path into which to save the plot
     '''
     pathlib.Path(filePath).parent.mkdir(parents=True, exist_ok=True)
     fig = plot.get_figure()
@@ -395,6 +400,7 @@ if __name__ == "__main__":
         analyze_news_data(news_data)        
     else:
         news_data = load_processed_data(NEWS_DATA)
+    
     if args.amazon:
         amazon_data = process_amazon_data()
         analyze_amazon_data(amazon_data)        
@@ -404,9 +410,3 @@ if __name__ == "__main__":
     if not args.news and not args.amazon:
         analyze_news_data(news_data)
         analyze_amazon_data(amazon_data)
-    # print(readability_score('Hello World!'))
-    # print(readability_score('Join the Dark Side, we have home-made cookies.'))
-    # print(readability_score('Once, into a quiet village, without haste and without heed '
-    #                         'in the golden prime of morning, strayed the poet\'s winged steed. '
-    #                         'It was autumn, and incessant, piped the quails from shocks and sheaves, '
-    #                         'and, like living coals, the apples, burned among the withering leaves.'))
