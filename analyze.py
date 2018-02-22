@@ -230,7 +230,7 @@ def analyze_news_data(news_data):
     print(publication_means.head())
     plot = sns.barplot(y='publication', x='score', data=publication_means)
     plot.set_title('Comparing Flesch-Kincaid Reading Ease Scores\nfor Different Publications')
-    plot.set(xlim=(0,100), xlabel='Average Flesch-Kincaid Reading Ease Score')
+    plot.set(xlim=(0,70), xlabel='Average Flesch-Kincaid Reading Ease Score', ylabel='')
     plt.tight_layout()
     save_plot(plot, './analysis/news/publication_comparison.png')
     # Scores by year
@@ -241,7 +241,7 @@ def analyze_news_data(news_data):
     plot = sns.pointplot(x='year', y='score', data=year_means)
     plot.set_title('Comparing Flesch-Kincaid Reading Ease Scores\nfor Different Years')
     plot.set_xticklabels(plot.get_xticklabels(), rotation=90)
-    plot.set(ylim=(0,100), ylabel='Average Flesch-Kincaid Reading Ease Score', xlabel='Year')
+    plot.set(ylim=(20,80), ylabel='Average Flesch-Kincaid Reading Ease Score', xlabel='')
     plt.tight_layout()
     save_plot(plot, './analysis/news/year_comparison.png')
 # End of analyze_news_data()
