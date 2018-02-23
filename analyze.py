@@ -29,7 +29,7 @@ NEWS_DATA = './processed_data/news/articles.pkl'
 AMAZON_DATA = './processed_data/amazon/reviews.pkl'
 
 # Things to not count as words and/or syllables
-WORD_EXCEPTIONS = ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%', '\'', '"', '`', '”', '“']
+WORD_EXCEPTIONS = ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%', '\'', '"', '`', '”', '“', '’']
 MAX_SCORE = 121.22
 
 #
@@ -206,9 +206,9 @@ def read_amazon_data():
     '''
     print('=====Reading Amazon Data=====')
     amazon_json = fromjson('./data/amazon/kindle_reviews.json')
-    
+
     print('=====Cleaning Amazon Data=====')
-    num_errors = 0    
+    num_errors = 0
     for k, v in enumerate(amazon_json):
         try:
             amazon_json[k].pop("reviewerID", None)
@@ -220,7 +220,7 @@ def read_amazon_data():
             amazon_json[k]["rating"] = int(float(amazon_json[k]["overall"]))
             amazon_json[k]["year"] = int(amazon_json[k]["reviewTime"].split(", ")[1])
             amazon_json[k].pop("overall", None)
-            amazon_json[k].pop("reviewTime", None)            
+            amazon_json[k].pop("reviewTime", None)
         except Exception:
             num_errors += 1
             print(traceback.format_exc())
@@ -346,7 +346,7 @@ def analyze_amazon_data(amazon_data):
     plot = sns.barplot(y='score', x='rating', data=rating_means)
     plot.set_title('Comparing Flesch-Kincaid Reading Ease Scores\nfor Different Ratings')
     plot.set(xlim=(-1,5), xlabel='Amazon Rating')
-    plot.set(ylim=(0,100), yticks=[0,10,20,30,40,50,60,70,80,90,100], ylabel='Flesch-Kincaid Reading Ease Score')    
+    plot.set(ylim=(0,100), yticks=[0,10,20,30,40,50,60,70,80,90,100], ylabel='Flesch-Kincaid Reading Ease Score')
     plt.tight_layout()
     save_plot(plot, './analysis/amazon/rating_comparison.png')
     # Scores by year
@@ -396,13 +396,13 @@ if __name__ == "__main__":
 
     if args.news:
         news_data = process_news_data()
-        analyze_news_data(news_data)        
+        analyze_news_data(news_data)
     else:
         news_data = load_processed_data(NEWS_DATA)
-    
+
     if args.amazon:
         amazon_data = process_amazon_data()
-        analyze_amazon_data(amazon_data)        
+        analyze_amazon_data(amazon_data)
     else:
         amazon_data = load_processed_data(AMAZON_DATA)
 

@@ -23,6 +23,9 @@ from nltk.tokenize import sent_tokenize
 #
 AUGMENTED_DATA = './processed_data/news/augmented.pkl'
 
+# Things to not count as words and/or syllables
+WORD_EXCEPTIONS = ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%', '\'', '"', '`', '”', '“', '’']
+
 '''
 Augments the difficult of the specified text to make it easier to read
 
@@ -34,12 +37,9 @@ Returns:
 '''
 def augment(text):
     # Printing the old text
-    # print(text)
+    print(text)
 
     # Augmenting the text
-
-    # Tracking location of spaces to be able to restore properly
-    spaces = [space.start() for space in re.finditer(re.escape(' '), text)]
 
     # Creating key-value pairs for tokenized words
     words = word_tokenize(text)
@@ -79,8 +79,15 @@ def augment(text):
     # Replacing key-value pairs with simply the str of each
     words = [w[1] for w in words]
 
+    for i in range(len(words) - 1, -1, -1):
+        if not words[i] in WORD_EXCEPTIONS:
+            words.insert(i, ' ')
+
     # Flatten words in a single str
-    augmented_text = ' '.join(words)
+    augmented_text = ''.join(words)
+
+    # Printing the augemnted text
+    print(augmented_text)
 
     return augmented_text
 # End of augment()
@@ -108,10 +115,13 @@ def process_news_data():
         aug_scores.append(new_score)
         if index % 1000 == 0:
             print('Processed %d articles' % index)
+        #TODO
+        if index > -1:
+            break
 
     print("Articles with a faulty score: %d/%d" % (num_errors, len(scores)))
-    news_data['score'] = scores
-    news_data['aug_scores'] = aug_scores
+    news_data['score'] = scores + [scores[0]] * (len(news_data) - len(scores))
+    news_data['aug_scores'] = aug_scores + [aug_scores[0]] * (len(news_data) - len(aug_scores))
     news_data = news_data.loc[news_data['score'] > -1] # Drop all rows where the score is wrong
     news_data = news_data.drop(columns=['content'])
     print(news_data.head())

@@ -15,7 +15,7 @@ import analyze
 from nltk.corpus import wordnet
 
 # Things to not count as words and/or syllables
-WORD_EXCEPTIONS = ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%', '\'', '"', '`', '”', '“']
+WORD_EXCEPTIONS = ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%', '\'', '"', '`', '”', '“', '’']
 
 def speech_part(tag):
 
@@ -91,7 +91,7 @@ def augment(text):
                     option.append(max(total_syl))
 
                 word_options = sorted(word_options, key=lambda x:x[1])
-                
+
                 # replaces the original word if new is more simple/complex
                 if len(word_options) > 0:
                     if word_options[0][1] < num_syllables:
