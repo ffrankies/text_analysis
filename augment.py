@@ -3,6 +3,8 @@
 Augments the difficulty of the text document by removing the least significant
 words in a text and then replacing remaining words with the shortest synonym.
 
+Git Repository: https://github.com/ffrankies/text_analysis
+
 CIS 365 - Artificial Intelligence - Project 2
 Frank Wanye
 Kellin McAvoy
@@ -37,7 +39,7 @@ Returns:
 '''
 def augment(text):
     # Printing the old text
-    print(text)
+    # print(text)
 
     # Augmenting the text
 
@@ -79,6 +81,7 @@ def augment(text):
     # Replacing key-value pairs with simply the str of each
     words = [w[1] for w in words]
 
+    # Inserting spaces into the text
     for i in range(len(words) - 1, -1, -1):
         if not words[i] in WORD_EXCEPTIONS:
             words.insert(i, ' ')
@@ -87,7 +90,7 @@ def augment(text):
     augmented_text = ''.join(words)
 
     # Printing the augemnted text
-    print(augmented_text)
+    # print(augmented_text)
 
     return augmented_text
 # End of augment()
@@ -115,9 +118,6 @@ def process_news_data():
         aug_scores.append(new_score)
         if index % 1000 == 0:
             print('Processed %d articles' % index)
-        #TODO
-        if index > -1:
-            break
 
     print("Articles with a faulty score: %d/%d" % (num_errors, len(scores)))
     news_data['score'] = scores + [scores[0]] * (len(news_data) - len(scores))

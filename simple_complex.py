@@ -2,6 +2,8 @@
 '''
 Creates a simpler and more complex version of a text.
 
+Git Repository: https://github.com/ffrankies/text_analysis
+
 CIS 365 - Artificial Intelligence - Project 2
 Frank Wanye
 Kellin McAvoy

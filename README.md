@@ -1,5 +1,6 @@
 # text_analysis
 NLP project for Artificial Intelligence class
+Git Repository: https://github.com/ffrankies/text_analysis
 
 ## How to use nltk
 

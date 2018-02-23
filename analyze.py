@@ -2,6 +2,8 @@
 '''
 Analyzes the readability of some texts.
 
+Git Repository: https://github.com/ffrankies/text_analysis
+
 CIS 365 - Artificial Intelligence - Project 2
 Frank Wanye
 Kellin McAvoy
