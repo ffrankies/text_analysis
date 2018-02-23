@@ -178,7 +178,7 @@ def process_news_data():
             print('Processed %d articles' % index)
     print("Articles with a faulty score: %d/%d" % (num_errors, len(scores)))
     news_data['score'] = scores
-    news_data = news_data.loc[news_data['score'] > MAX_SCORE] # Drop all rows where the score is wrong
+    news_data = news_data.loc[news_data['score'] <= MAX_SCORE] # Drop all rows where the score is wrong
     news_data = news_data.drop(columns=['content'])
     print(news_data.head())
     save_processed_data(news_data, NEWS_DATA)
@@ -245,14 +245,14 @@ def process_amazon_data():
     num_errors = 0
     for index, content in enumerate(amazon_data['reviewText']):
         score = readability_score(content)
-        if score == -1:
+        if score > MAX_SCORE:
             num_errors += 1
         scores.append(score)
         if index % 1000 == 0:
             print('Processed %d reviews' % index)
     print("Reviews with a faulty score: %d/%d" % (num_errors, len(scores)))
     amazon_data['score'] = scores
-    amazon_data = amazon_data.loc[amazon_data['score'] > -1] # Drop all rows where the score is wrong
+    amazon_data = amazon_data.loc[amazon_data['score'] <= MAX_SCORE] # Drop all rows where the score is wrong
     amazon_data = amazon_data.drop(columns=['reviewText'])
     print(amazon_data.head())
     save_processed_data(amazon_data, AMAZON_DATA)
