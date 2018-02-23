@@ -91,18 +91,20 @@ def augment(text):
                     option.append(max(total_syl))
 
                 word_options = sorted(word_options, key=lambda x:x[1])
-
+                
                 # replaces the original word if new is more simple/complex
                 if len(word_options) > 0:
                     if word_options[0][1] < num_syllables:
+                        simple_list[i] = ""
                         for opt in word_options[0][0]:
-                            simple_list[i] = opt + " "
+                            simple_list[i] += opt + " "
                         simple_list[i] = simple_list[i][:-1]
                     else:
                         simple_list[i] = words[i]
                     if word_options[len(word_options) - 1][1] > num_syllables:
+                        complex_list[i] = ""
                         for opt in word_options[len(word_options) - 1][0]:
-                            complex_list[i] = opt + " "
+                            complex_list[i] += opt + " "
                         complex_list[i] = complex_list[i][:-1]
                     else:
                         simple_list[i] = words[i]
