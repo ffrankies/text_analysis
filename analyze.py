@@ -115,8 +115,8 @@ def num_sentences(text):
 
 def readability_score(text):
     '''
-    Calculates the Flesch-Kincaid Reading Easy Score for the given text. If the readability score is off the
-    Flesch-Kincaid Reading Ease Score scale (< 0 or > 100), returns -1.
+    Calculates the Flesch-Kincaid Reading Easy Score for the given text. If the readability score is unable
+    to be calculated, returns 1000
 
     Params:
     - text (str): The text to be analyzed
@@ -174,7 +174,7 @@ def process_news_data():
             print('Processed %d articles' % index)
     print("Articles with a faulty score: %d/%d" % (num_errors, len(scores)))
     news_data['score'] = scores
-    news_data = news_data.loc[news_data['score'] > -1] # Drop all rows where the score is wrong
+    news_data = news_data.loc[news_data['score'] > 200] # Drop all rows where the score is wrong
     news_data = news_data.drop(columns=['content'])
     print(news_data.head())
     save_processed_data(news_data, NEWS_DATA)
