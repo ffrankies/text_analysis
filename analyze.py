@@ -131,8 +131,6 @@ def readability_score(text):
     score = 206.835
     score -= 1.015 * (words / sentences)
     score -= 84.6 * (syllables / words)
-    if score > 123: # All faulty scores are -1, for easy filtering
-        return -1
     return score
 # End of readability_score()
 
