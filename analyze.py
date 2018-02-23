@@ -30,6 +30,7 @@ AMAZON_DATA = './processed_data/amazon/reviews.pkl'
 
 # Things to not count as words and/or syllables
 WORD_EXCEPTIONS = ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%', '\'', '"', '`', '”', '“']
+MAX_SCORE = 121.22
 
 #
 # The dictionaries for counting syllables
@@ -118,8 +119,8 @@ def num_sentences(text):
 
 def readability_score(text):
     '''
-    Calculates the Flesch-Kincaid Reading Easy Score for the given text. If the readability score is off the
-    Flesch-Kincaid Reading Ease Score scale (< 0 or > 100), returns -1.
+    Calculates the Flesch-Kincaid Reading Easy Score for the given text. If the readability score is unable
+    to be calculated, returns 1000
 
     Params:
     - text (str): The text to be analyzed
@@ -130,12 +131,10 @@ def readability_score(text):
     words, syllables = num_words(text)
     sentences = num_sentences(text)
     if sentences == 0 or words == 0: # Prevent division by 0
-        return -1
+        return 1000
     score = 206.835
     score -= 1.015 * (words / sentences)
     score -= 84.6 * (syllables / words)
-    if score < 0 or score > 100: # All faulty scores are -1, for easy filtering
-        return -1
     return score
 # End of readability_score()
 
@@ -172,14 +171,14 @@ def process_news_data():
     num_errors = 0
     for index, content in enumerate(news_data['content']):
         score = readability_score(content)
-        if score == -1:
+        if score > MAX_SCORE:
             num_errors += 1
         scores.append(score)
         if index % 1000 == 0:
             print('Processed %d articles' % index)
     print("Articles with a faulty score: %d/%d" % (num_errors, len(scores)))
     news_data['score'] = scores
-    news_data = news_data.loc[news_data['score'] > -1] # Drop all rows where the score is wrong
+    news_data = news_data.loc[news_data['score'] > MAX_SCORE] # Drop all rows where the score is wrong
     news_data = news_data.drop(columns=['content'])
     print(news_data.head())
     save_processed_data(news_data, NEWS_DATA)
