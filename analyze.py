@@ -27,6 +27,7 @@ NEWS_DATA = './processed_data/news/articles.pkl'
 
 # Things to not count as words and/or syllables
 WORD_EXCEPTIONS = ['', ',', '.', '!', '?', ':', ';', '[', ']', '(', ')', '$', '@', '%', '\'', '"', '`', '”', '“']
+MAX_SCORE = 121.22
 
 #
 # The dictionaries for counting syllables
@@ -167,14 +168,14 @@ def process_news_data():
     num_errors = 0
     for index, content in enumerate(news_data['content']):
         score = readability_score(content)
-        if score > 200:
+        if score > MAX_SCORE:
             num_errors += 1
         scores.append(score)
         if index % 1000 == 0:
             print('Processed %d articles' % index)
     print("Articles with a faulty score: %d/%d" % (num_errors, len(scores)))
     news_data['score'] = scores
-    news_data = news_data.loc[news_data['score'] > 200] # Drop all rows where the score is wrong
+    news_data = news_data.loc[news_data['score'] > MAX_SCORE] # Drop all rows where the score is wrong
     news_data = news_data.drop(columns=['content'])
     print(news_data.head())
     save_processed_data(news_data, NEWS_DATA)
