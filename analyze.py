@@ -127,7 +127,7 @@ def readability_score(text):
     words, syllables = num_words(text)
     sentences = num_sentences(text)
     if sentences == 0 or words == 0: # Prevent division by 0
-        return -1
+        return 1000
     score = 206.835
     score -= 1.015 * (words / sentences)
     score -= 84.6 * (syllables / words)
@@ -167,7 +167,7 @@ def process_news_data():
     num_errors = 0
     for index, content in enumerate(news_data['content']):
         score = readability_score(content)
-        if score == -1:
+        if score > 200:
             num_errors += 1
         scores.append(score)
         if index % 1000 == 0:
